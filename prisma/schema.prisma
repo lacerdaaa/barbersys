@@ -14,44 +14,75 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(uuid())
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  password     String
+  role         Role      @default(CLIENT)
+  services     Service[] @relation("BarberServices")
+  bookings     Booking[] @relation("ClientBookings")
+  barbershopId String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  ownedShop  Barbershop? @relation("BarbershopOwner")
+  barbershop Barbershop? @relation("BarbershopBarbers", fields: [barbershopId], references: [id])
+}
+
+model Barbershop {
+  id        String   @id @default(uuid())
   name      String
-  email     String    @unique
-  password  String
-  role      Role      @default(CLIENT)
-  services  Service[] @relation("BarberServices")
-  bookings  Booking[] @relation("ClientBookings")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  ownerId   String   @unique
+  invites   Invite[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  barbers User[] @relation("BarbershopBarbers")
+  owner   User   @relation("BarbershopOwner", fields: [ownerId], references: [id])
+}
+
+model Invite {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  barbershopId String
+  expiresAt    DateTime
+  used         Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  expired      Boolean? @default(false)
+
+  barbershop Barbershop @relation(fields: [barbershopId], references: [id])
 }
 
 model Service {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
   price     Float
-  duration  Int      
-  barber    User     @relation("BarberServices", fields: [barberId], references: [id])
+  duration  Int
   barberId  String
   bookings  Booking[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  barber User @relation("BarberServices", fields: [barberId], references: [id])
 }
 
 model Booking {
-  id        String     @id @default(uuid())
-  client    User       @relation("ClientBookings", fields: [clientId], references: [id])
+  id        String        @id @default(uuid())
   clientId  String
-  service   Service    @relation(fields: [serviceId], references: [id])
   serviceId String
   date      DateTime
   status    BookingStatus @default(PENDING)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  service Service @relation(fields: [serviceId], references: [id])
+  client  User    @relation("ClientBookings", fields: [clientId], references: [id])
 }
 
 enum Role {
   CLIENT
   BARBER
+  OWNER
 }
 
 enum BookingStatus {

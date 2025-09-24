@@ -7,14 +7,36 @@ const prisma = new PrismaClient();
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, inviteCode } = req.body;
     const hashed = await hash(password, 10);
 
-    const user = await prisma.user.create({
-      data: { name, email, password: hashed, role },
-    });
+    if (role === 'BARBER') {
+      const invite = await prisma.invite.findUnique({
+        where: { code: inviteCode }
+      });
+      if (!invite) throw new Error("Código inválido");
+      if (invite.expiresAt < new Date() || invite.expired) throw new Error("Convite expirado");
+      if (invite.used) throw new Error("Convite já utilizado");
 
-    return res.status(201).json({ message: "Usuário criado", user });
+      const user = await prisma.user.create({
+        data: { name, email, password: hashed, role },
+      });
+
+      await prisma.invite.update({
+        where: { id: invite.id },
+        data: { used: true }
+      })
+
+      return res.status(201).json(user)
+
+    } else {
+      const user = await prisma.user.create({
+        data: { name, email, password: hashed, role },
+      });
+      return res.status(201).json({ message: "Usuário criado", user });
+    }
+
+
   } catch (err: any) {
     return res.status(400).json({ error: err.message });
   }

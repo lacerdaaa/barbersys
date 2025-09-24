@@ -29,7 +29,7 @@ export const createService = async (req: Request, res: Response) => {
 };
 
 export const updateService = async (req: Request, res: Response) => {
-  const role = (req as any).user.id;
+  const role = (req as any).user.role;
   const { serviceId } = req.params;
   const { name, duration, price } = req.body;
 
@@ -54,7 +54,7 @@ export const updateService = async (req: Request, res: Response) => {
 };
 
 export const deleteService = (req: Request, res: Response) => {
-  const role = (req as any).user.id;
+  const role = (req as any).user.role;
   const { serviceId } = req.params;
 
   if (role === 'CLIENT') {
