@@ -73,20 +73,19 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
   const { serviceId } = req.params;
   const { status } = req.body;
 
-  if (role === "BARBER") {
+  if (role === 'CLIENT') {
+    return res.status(401).json({ error: 'Não autorizado.' })
+  };
 
-    try {
-      const booking = await prisma.booking.update({
-        where: { id: serviceId },
-        data: {
-          status: status,
-        },
-      });
-      res.status(201).json(booking)
-    } catch (error) {
-
-    }
-
-
-  }
+  try {
+    const booking = await prisma.booking.update({
+      where: { id: serviceId },
+      data: {
+        status: status,
+      },
+    });
+    res.status(201).json(booking);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro interno no servidor.' });
+  };
 };

@@ -6,7 +6,7 @@ export function verifyJWT(req: Request, res: Response, next: NextFunction) {
 
   if (!header || !header.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Token não fornecido" });
-  }
+  };
 
   const token = header.split(" ")[1];
 
@@ -16,5 +16,5 @@ export function verifyJWT(req: Request, res: Response, next: NextFunction) {
     next();
   } catch {
     return res.status(401).json({ error: "Token inválido ou expirado" });
-  }
-}
+  };
+};
