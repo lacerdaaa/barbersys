@@ -8,7 +8,6 @@ const prisma = new PrismaClient();
 export const register = async (req: Request, res: Response) => {
   try {
     const { name, email, password, role } = req.body;
-
     const hashed = await hash(password, 10);
 
     const user = await prisma.user.create({

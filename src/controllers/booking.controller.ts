@@ -44,12 +44,49 @@ export const listBookings = async (req: Request, res: Response) => {
     } else {
       bookings = await prisma.booking.findMany({
         where: { service: { barberId: userId } },
-        include: { service: true, client: true },
+        include: {
+          service: true,
+          client: {
+            select: {
+              name: true,
+              bookings: {
+                where: {
+                  service: {
+                    barberId: userId
+                  }
+                }
+              },
+            }
+          }
+        },
       });
-    }
+    };
 
     return res.json(bookings);
   } catch (err: any) {
     return res.status(400).json({ error: err.message });
+  }
+};
+
+export const updateBookingStatus = async (req: Request, res: Response) => {
+  const role = (req as any).user.role;
+  const { serviceId } = req.params;
+  const { status } = req.body;
+
+  if (role === "BARBER") {
+
+    try {
+      const booking = await prisma.booking.update({
+        where: { id: serviceId },
+        data: {
+          status: status,
+        },
+      });
+      res.status(201).json(booking)
+    } catch (error) {
+
+    }
+
+
   }
 };
