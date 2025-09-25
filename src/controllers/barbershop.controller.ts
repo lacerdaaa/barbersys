@@ -25,22 +25,74 @@ export const createBarberShop = async (req: Request, res: Response) => {
 };
 
 export const createInvite = async (req: Request, res: Response) => {
-  const { barbershopId, daysValid } = req.body;
+  const userId = (req as any).user.id;
+  const role = (req as any).user.role;
+  const { daysValid } = req.body;
   try {
-    const code = randomBytes(4).toString("hex").toUpperCase();
+    if (role === 'CLIENT' || role === 'BARBER') {
+      return res.status(401).json({ error: 'Você não tem permissão para isso.' })
+    };
+
+    const code = randomBytes(5).toString("hex").toUpperCase();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + daysValid);
 
-    const invite = prisma.invite.create({
-      data: {
-        code,
-        barbershopId,
-        expiresAt
-      }
+    const barberShop = await prisma.barbershop.findFirst({
+      where: { ownerId: userId }
     });
 
-    return res.status(201).json(invite)
+    if (!barberShop) {
+      return res.status(404).json({ error: "Nenhuma barbearia encontrada para esse usuário." });
+    }
+
+    const invite = await prisma.invite.create({
+      data: {
+        code,
+        expiresAt,
+        barbershopId: barberShop.id,
+      },
+    });
+
+    return res.status(201).json(invite);
+
   } catch (error) {
     return res.status(500).json({ error })
   }
-}
+};
+
+export const getBarberShopById = async (req: Request, res: Response) => {
+  const userRole = (req as any).user.role;
+  const { barbershopId } = req.params;
+
+  try {
+    if (userRole !== "OWNER") {
+      return res.status(401).json({ error: "Sem autorização de acesso." })
+    };
+
+    const barberShop = await prisma.barbershop.findUnique({
+      where: { id: barbershopId },
+      select: {
+        name: true,
+        barbers: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          }
+        },
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          }
+        },
+      }
+    });
+
+    return res.status(200).json(barberShop);
+  } catch (error) {
+    return res.status(500).json({ error })
+  };
+};

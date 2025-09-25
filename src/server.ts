@@ -1,8 +1,10 @@
-import express from "express";
+import express, { NextFunction, RequestHandler } from "express";
 import cors from 'cors'
 import { prisma } from "./lib/prisma";
 import router from "./routes";
 import { configDotenv } from "dotenv";
+import { loggingMiddleware } from "./middlewares/logger";
+import { logger } from "./config/logger";
 
 configDotenv();
 
@@ -15,14 +17,15 @@ app.use(cors({
   allowedHeaders: ['Authorization',]
 }));
 
-app.use("/api", router)
+app.use(loggingMiddleware);
+app.use("/api", router);
 
 async function main() {
   try {
     await prisma.$connect();
-    console.log('Prisma connected sucessfully');
+    logger.info('Prisma connected sucessfully');
     app.listen(port, () => {
-      console.log(`Core service running on port ${port}`);
+      logger.info(`Core service running on port ${port}`);
     });
   } catch (error) {
     console.error(error);

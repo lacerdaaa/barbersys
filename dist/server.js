@@ -17,6 +17,8 @@ const cors_1 = __importDefault(require("cors"));
 const prisma_1 = require("./lib/prisma");
 const routes_1 = __importDefault(require("./routes"));
 const dotenv_1 = require("dotenv");
+const logger_1 = require("./middlewares/logger");
+const logger_2 = require("./config/logger");
 (0, dotenv_1.configDotenv)();
 const app = (0, express_1.default)();
 const port = process.env.PORT;
@@ -26,15 +28,15 @@ app.use((0, cors_1.default)({
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Authorization',]
 }));
-app.use("health-check", () => console.log('ok'));
+app.use(logger_1.loggingMiddleware);
 app.use("/api", routes_1.default);
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield prisma_1.prisma.$connect();
-            console.log('Prisma connected sucessfully');
+            logger_2.logger.info('Prisma connected sucessfully');
             app.listen(port, () => {
-                console.log(`Core service running on port ${port}`);
+                logger_2.logger.info(`Core service running on port ${port}`);
             });
         }
         catch (error) {

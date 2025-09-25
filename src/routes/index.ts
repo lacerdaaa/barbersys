@@ -4,6 +4,7 @@ import { getProfile } from "../controllers/user.controller";
 import { createService, deleteService, listServices, updateService } from "../controllers/service.controller";
 import { createBooking, listBookings, updateBookingStatus } from "../controllers/booking.controller";
 import { verifyJWT } from "../middlewares/verify";
+import { createBarberShop, createInvite, getBarberShopById } from "../controllers/barbershop.controller";
 
 const router = Router();
 
@@ -19,5 +20,9 @@ router.delete("/services/:serviceId", verifyJWT, deleteService);
 router.post("/bookings", verifyJWT, createBooking);
 router.get("/bookings", verifyJWT, listBookings);
 router.put("/bookings/:serviceId", verifyJWT, updateBookingStatus);
+
+router.get("/barber-shop/:barbershopId", verifyJWT, getBarberShopById);
+router.post("/barber-shop", verifyJWT, createBarberShop);
+router.post("/barber-shop/invite", verifyJWT, createInvite);
 
 export default router;

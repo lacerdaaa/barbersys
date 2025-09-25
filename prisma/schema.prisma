@@ -19,12 +19,12 @@ model User {
   email        String    @unique
   password     String
   role         Role      @default(CLIENT)
-  services     Service[] @relation("BarberServices")
-  bookings     Booking[] @relation("ClientBookings")
   barbershopId String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  services     Service[] @relation("BarberServices")
+  bookings     Booking[] @relation("ClientBookings")
   ownedShop  Barbershop? @relation("BarbershopOwner")
   barbershop Barbershop? @relation("BarbershopBarbers", fields: [barbershopId], references: [id])
 }

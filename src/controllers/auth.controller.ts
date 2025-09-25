@@ -2,8 +2,8 @@ import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { compare, hash } from "bcryptjs";
 import { signToken } from "../lib/jwt";
+import { prisma } from "../lib/prisma";
 
-const prisma = new PrismaClient();
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -19,7 +19,7 @@ export const register = async (req: Request, res: Response) => {
       if (invite.used) throw new Error("Convite já utilizado");
 
       const user = await prisma.user.create({
-        data: { name, email, password: hashed, role },
+        data: { name, email, password: hashed, role, barbershopId: invite.barbershopId },
       });
 
       await prisma.invite.update({
@@ -27,18 +27,15 @@ export const register = async (req: Request, res: Response) => {
         data: { used: true }
       })
 
-      return res.status(201).json(user)
-
+      return res.status(201).json(user);
     } else {
       const user = await prisma.user.create({
         data: { name, email, password: hashed, role },
       });
       return res.status(201).json({ message: "Usuário criado", user });
     }
-
-
-  } catch (err: any) {
-    return res.status(400).json({ error: err.message });
+  } catch (error) {
+    return res.status(400).json({ error: "Erro interno do servidor." });
   }
 };
 
