@@ -3,9 +3,9 @@ import { prisma } from '../lib/prisma';
 import { randomBytes } from 'crypto';
 
 export const createBarberShop = async (req: Request, res: Response) => {
+  const { name, address, latitude, longitude, phone, description } = req.body;
   const role = (req as any).user.role;
   const userId = (req as any).user.id;
-  const { name } = req.body;
   try {
     if (role === 'CLIENT' || role === 'BARBER') {
       return res.status(401).json({ error: 'Você não tem permissão para isso.' })
@@ -15,6 +15,11 @@ export const createBarberShop = async (req: Request, res: Response) => {
       data: {
         name,
         ownerId: userId,
+        address,
+        latitude,
+        longitude,
+        phone,
+        description
       }
     });
 
@@ -96,3 +101,7 @@ export const getBarberShopById = async (req: Request, res: Response) => {
     return res.status(500).json({ error })
   };
 };
+
+export const getBarberShops = async () => {
+  //todo: implementar busca por região 
+}

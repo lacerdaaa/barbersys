@@ -19,7 +19,7 @@ router.delete("/services/:serviceId", verifyJWT, deleteService);
 
 router.post("/bookings", verifyJWT, createBooking);
 router.get("/bookings", verifyJWT, listBookings);
-router.put("/bookings/:serviceId", verifyJWT, updateBookingStatus);
+router.patch("/bookings/:serviceId", verifyJWT, updateBookingStatus);
 
 router.get("/barber-shop/:barbershopId", verifyJWT, getBarberShopById);
 router.post("/barber-shop", verifyJWT, createBarberShop);
