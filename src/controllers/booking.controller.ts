@@ -5,7 +5,7 @@ import { prisma } from "../lib/prisma";
 export const createBooking = async (req: Request, res: Response) => {
   try {
     const clientId = (req as any).user.id;
-    const { serviceId, date } = req.body;
+    const { serviceId, barberId, barbershopId, date } = req.body;
 
     const conflict = await prisma.booking.findFirst({
       where: { serviceId, date: new Date(date), status: BookingStatus.CONFIRMED },
@@ -18,6 +18,8 @@ export const createBooking = async (req: Request, res: Response) => {
     const booking = await prisma.booking.create({
       data: {
         clientId,
+        barbershopId,
+        barberId,
         serviceId,
         date: new Date(date),
       },
@@ -26,7 +28,7 @@ export const createBooking = async (req: Request, res: Response) => {
     return res.status(201).json(booking);
   } catch (err: any) {
     return res.status(400).json({ error: err.message });
-  }
+  };
 };
 
 export const listBookings = async (req: Request, res: Response) => {
@@ -35,36 +37,29 @@ export const listBookings = async (req: Request, res: Response) => {
     const role = (req as any).user.role;
 
     let bookings;
+
     if (role === "CLIENT") {
       bookings = await prisma.booking.findMany({
         where: { clientId: userId },
         include: { service: true },
       });
-    } else {
+    };
+
+    if (role === "BARBER") {
       bookings = await prisma.booking.findMany({
-        where: { service: { barberId: userId } },
-        include: {
-          service: true,
-          client: {
-            select: {
-              name: true,
-              bookings: {
-                where: {
-                  service: {
-                    barberId: userId
-                  }
-                }
-              },
-            }
-          }
-        },
+        where: {
+          barberId: role,
+        }
       });
     };
 
-    return res.json(bookings);
+    if (role === "OWNER") {
+      bookings = await prisma.booking.findMany()
+    };
+    return res.status(200).json(bookings);
   } catch (err: any) {
     return res.status(400).json({ error: err.message });
-  }
+  };
 };
 
 export const updateBookingStatus = async (req: Request, res: Response) => {
@@ -88,3 +83,4 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Erro interno no servidor.' });
   };
 };
+

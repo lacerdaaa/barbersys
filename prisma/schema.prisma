@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -22,28 +19,33 @@ model User {
   barbershopId String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  Booking      Booking[]
 
-  services     Service[] @relation("BarberServices")
-  bookings     Booking[] @relation("ClientBookings")
-  ownedShop    Barbershop? @relation("BarbershopOwner")
-  barbershop   Barbershop? @relation("BarbershopBarbers", fields: [barbershopId], references: [id])
+  bookings   Booking[]   @relation("ClientBookings")
+  ownedShop  Barbershop? @relation("BarbershopOwner")
+  barbershop Barbershop? @relation("BarbershopBarbers", fields: [barbershopId], references: [id])
+  services   Service[]   @relation("BarberServices")
+  Service    Service?    @relation(fields: [serviceId], references: [id])
+  serviceId  String?
 }
 
 model Barbershop {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
-  address     String?  
-  latitude    Float?   
-  longitude   Float?  
-  phone       String?  
-  description String?  
-  ownerId     String   @unique
+  address     String?
+  latitude    Float?
+  longitude   Float?
+  phone       String?
+  description String?
+  ownerId     String    @unique
   invites     Invite[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  services    Service[]
 
-  barbers User[] @relation("BarbershopBarbers")
-  owner   User   @relation("BarbershopOwner", fields: [ownerId], references: [id])
+  barbers  User[]    @relation("BarbershopBarbers")
+  owner    User      @relation("BarbershopOwner", fields: [ownerId], references: [id])
+  bookings Booking[]
 }
 
 model Invite {
@@ -59,29 +61,35 @@ model Invite {
 }
 
 model Service {
-  id        String    @id @default(uuid())
-  name      String
-  price     Float
-  duration  Int
-  barberId  String
-  bookings  Booking[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id           String    @id @default(uuid())
+  barbershopId String
+  name         String
+  price        Float
+  duration     Int
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  barbersIds   User[]
+  bookings     Booking[]
 
-  barber User @relation("BarberServices", fields: [barberId], references: [id])
+  barbershop Barbershop @relation(fields: [barbershopId], references: [id])
+  barbers    User[]     @relation("BarberServices")
 }
 
 model Booking {
-  id        String        @id @default(uuid())
-  clientId  String
-  serviceId String
-  date      DateTime
-  status    BookingStatus @default(PENDING)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id           String        @id @default(uuid())
+  clientId     String
+  barberId     String
+  serviceId    String
+  barbershopId String
+  date         DateTime
+  status       BookingStatus @default(PENDING)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
-  service Service @relation(fields: [serviceId], references: [id])
-  client  User    @relation("ClientBookings", fields: [clientId], references: [id])
+  client     User       @relation("ClientBookings", fields: [clientId], references: [id])
+  barber     User       @relation(fields: [barberId], references: [id])
+  service    Service    @relation(fields: [serviceId], references: [id])
+  barbershop Barbershop @relation(fields: [barbershopId], references: [id])
 }
 
 enum Role {

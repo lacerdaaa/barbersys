@@ -1,10 +1,17 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
+import { serviceSchema } from "../models/services";
 
 export const listServices = async (req: Request, res: Response) => {
   try {
     const services = await prisma.service.findMany({
-      include: { barber: { select: { id: true, name: true } } },
+      include: {
+        barbershop: {
+          include: {
+            barbers: true
+          }
+        }
+      },
     });
 
     return res.json(services);
@@ -15,11 +22,30 @@ export const listServices = async (req: Request, res: Response) => {
 
 export const createService = async (req: Request, res: Response) => {
   try {
-    const barberId = (req as any).user.id;
-    const { name, price, duration } = req.body;
+    const userId = (req as any).user.id;
+
+    const parsed = serviceSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(403).json({ error: parsed.error.message });
+    }
+    const data = parsed.data;
+
+    const barberShop = await prisma.barbershop.findUniqueOrThrow({
+      where: {
+        ownerId: userId,
+      },
+      select: {
+        id: true,
+      }
+    });
 
     const service = await prisma.service.create({
-      data: { name, price, duration, barberId },
+      data: {
+        name: data.name,
+        price: data.price,
+        duration: data.duration,
+        barbershopId: barberShop.id,
+      },
     });
 
     return res.status(201).json(service);

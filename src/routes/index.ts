@@ -21,6 +21,7 @@ router.post("/bookings", verifyJWT, createBooking);
 router.get("/bookings", verifyJWT, listBookings);
 router.patch("/bookings/:serviceId", verifyJWT, updateBookingStatus);
 
+router.get("/barber-shops", getBarberShopById)
 router.get("/barber-shop/:barbershopId", verifyJWT, getBarberShopById);
 router.post("/barber-shop", verifyJWT, createBarberShop);
 router.post("/barber-shop/invite", verifyJWT, createInvite);
