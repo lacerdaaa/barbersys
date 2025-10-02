@@ -12,9 +12,11 @@ const app = express();
 const port = process.env.PORT;
 app.use(express.json());
 app.use(cors({
-  origin: ["*"],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Authorization',]
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Authorization', 'Content-Type', 'Accept'],
+  exposedHeaders: ['X-Total-Count']
 }));
 
 app.use(loggingMiddleware);
@@ -24,7 +26,7 @@ async function main() {
   try {
     await prisma.$connect();
     logger.info('Prisma connected sucessfully');
-    app.listen(port, () => {
+    app.listen(3001, () => {
       logger.info(`Core service running on port ${port}`);
     });
   } catch (error) {
@@ -33,4 +35,3 @@ async function main() {
 };
 
 main();
-

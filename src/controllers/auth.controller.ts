@@ -4,7 +4,6 @@ import { compare, hash } from "bcryptjs";
 import { signToken } from "../lib/jwt";
 import { prisma } from "../lib/prisma";
 
-
 export const register = async (req: Request, res: Response) => {
   try {
     const { name, email, password, role, inviteCode } = req.body;

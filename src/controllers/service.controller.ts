@@ -22,37 +22,62 @@ export const listServices = async (req: Request, res: Response) => {
 
 export const createService = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    if (!(req as any)?.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    };
 
-    const parsed = serviceSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(403).json({ error: parsed.error.message });
+    const { name, price, duration, barberIds } = req.body;
+
+    if (!name || !price || !duration) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
-    const data = parsed.data;
 
-    const barberShop = await prisma.barbershop.findUniqueOrThrow({
-      where: {
-        ownerId: userId,
-      },
-      select: {
-        id: true,
-      }
+    if (typeof price !== "number" || price <= 0) {
+      return res.status(400).json({ error: "Price must be a positive number" });
+    }
+
+    if (typeof duration !== "number" || duration <= 0) {
+      return res.status(400).json({ error: "Duration must be a positive number" });
+    }
+
+    if (barberIds && !Array.isArray(barberIds)) {
+      return res.status(400).json({ error: "barberIds must be an array of IDs" });
+    }
+
+    const barberShop = await prisma.barbershop.findUnique({
+      where: { ownerId: (req as any)?.user.id },
+      select: { id: true }
     });
+
+    if (!barberShop) {
+      return res.status(404).json({ error: "Barbershop not found" });
+    }
 
     const service = await prisma.service.create({
       data: {
-        name: data.name,
-        price: data.price,
-        duration: data.duration,
+        name,
+        price,
+        duration,
         barbershopId: barberShop.id,
+        barbers: barberIds
+          ? { connect: barberIds.map((id: string) => ({ id })) }
+          : undefined,
       },
+      include: {
+        barbers: { select: { id: true, name: true, email: true } }
+      }
     });
 
-    return res.status(201).json(service);
-  } catch (err: any) {
-    return res.status(400).json({ error: err.message });
-  };
+    return res.status(201).json({
+      message: "Service created successfully",
+      data: service
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 };
+
 
 export const updateService = async (req: Request, res: Response) => {
   const role = (req as any).user.role;

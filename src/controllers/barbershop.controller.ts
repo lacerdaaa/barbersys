@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { randomBytes } from 'crypto';
 
@@ -78,6 +79,20 @@ export const getBarberShopById = async (req: Request, res: Response) => {
       where: { id: barbershopId },
       select: {
         name: true,
+        services: {
+          select: {
+            name: true,
+            price: true,
+            duration: true,
+            barbers: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              }
+            },
+          }
+        },
         barbers: {
           select: {
             id: true,
@@ -102,6 +117,54 @@ export const getBarberShopById = async (req: Request, res: Response) => {
   };
 };
 
-export const getBarberShops = async () => {
-  //todo: implementar busca por região 
-}
+export const getBarberShops = async (req: Request, res: Response) => {
+  try {
+    const { region, page = '1', limit = '15' } = req.query;
+
+    const parsedPage = Number(Array.isArray(page) ? page[0] : page);
+    const parsedLimit = Number(Array.isArray(limit) ? limit[0] : limit);
+
+    const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? Math.floor(parsedPage) : 1;
+    const pageSize = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(Math.floor(parsedLimit), 50) : 15;
+    const skip = (currentPage - 1) * pageSize;
+
+    const regionQuery = Array.isArray(region) ? region[0] : region;
+
+    const where: Prisma.BarbershopWhereInput = {};
+
+    if (regionQuery && typeof regionQuery === 'string' && regionQuery.trim()) {
+      const normalizedRegion = regionQuery.trim();
+      where.OR = [
+        { address: { contains: normalizedRegion, mode: 'insensitive' } },
+        { name: { contains: normalizedRegion, mode: 'insensitive' } },
+      ];
+    }
+
+    const [barbershops, total] = await Promise.all([
+      prisma.barbershop.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip,
+        take: pageSize,
+        include: {
+          services: {
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              duration: true,
+            },
+          },
+        },
+      }),
+      prisma.barbershop.count({ where }),
+    ]);
+
+    res.setHeader('X-Total-Count', total.toString());
+
+    return res.status(200).json(barbershops);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro ao listar barbearias.' });
+  }
+};
