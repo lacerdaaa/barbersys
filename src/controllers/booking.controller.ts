@@ -147,24 +147,31 @@ export const listBookings = async (req: Request, res: Response) => {
 
 export const updateBookingStatus = async (req: Request, res: Response) => {
   const role = (req as any).user.role;
+  const userId = (req as any).user.id;
   const { bookingId } = req.params as { bookingId: string };
-  const { status } = req.body;
+  const { status } = req.body as { status?: BookingStatus };
 
-  if (role === 'CLIENT') {
-    return res.status(401).json({ error: 'Não autorizado.' })
-  };
+  if (role !== 'BARBER') {
+    return res.status(401).json({ error: 'Não autorizado.' });
+  }
 
   try {
+    const existing = await prisma.booking.findUnique({ where: { id: bookingId }, select: { id: true, barberId: true } });
+    if (!existing) {
+      return res.status(404).json({ error: 'Agendamento não encontrado.' });
+    }
+    if (existing.barberId !== userId) {
+      return res.status(403).json({ error: 'Operação não permitida para este agendamento.' });
+    }
+
     const booking = await prisma.booking.update({
       where: { id: bookingId },
-      data: {
-        status: status,
-      },
+      data: { status },
     });
-    res.status(201).json(booking);
+    res.status(200).json(booking);
   } catch (error) {
     res.status(500).json({ error: 'Erro interno no servidor.' });
-  };
+  }
 };
 
 export const checkAvailability = async (req: Request, res: Response) => {

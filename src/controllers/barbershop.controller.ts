@@ -214,7 +214,7 @@ export const getBarberShops = async (req: Request, res: Response) => {
       radius = '15',
       orderBy = 'name',
     } = req.query;
-
+    
     const parsedPage = Number(Array.isArray(page) ? page[0] : page);
     const parsedLimit = Number(Array.isArray(limit) ? limit[0] : limit);
     const parsedLatitude = Number(Array.isArray(latitude) ? latitude[0] : latitude);
@@ -240,7 +240,7 @@ export const getBarberShops = async (req: Request, res: Response) => {
     }
 
     if (shouldFilterByDistance) {
-      const latDiff = radiusKm / 111.32; // approx degrees per km
+      const latDiff = radiusKm / 111.32; 
       const lngDiff = radiusKm / (111.32 * Math.cos(toRadians(parsedLatitude)) || 1);
 
       where.AND = [
@@ -298,7 +298,7 @@ export const getBarberShops = async (req: Request, res: Response) => {
     const paginated = filtered.slice(skip, skip + pageSize);
 
     res.setHeader('X-Total-Count', total.toString());
-
+    console.log(paginated)
     return res.status(200).json(paginated);
   } catch (error) {
     console.error(error);
