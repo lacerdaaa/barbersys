@@ -17,7 +17,8 @@ router.put("/services/:serviceId", verify_1.verifyJWT, service_controller_1.upda
 router.delete("/services/:serviceId", verify_1.verifyJWT, service_controller_1.deleteService);
 router.post("/bookings", verify_1.verifyJWT, booking_controller_1.createBooking);
 router.get("/bookings", verify_1.verifyJWT, booking_controller_1.listBookings);
-router.put("/bookings/:serviceId", verify_1.verifyJWT, booking_controller_1.updateBookingStatus);
+router.patch("/bookings/:serviceId", verify_1.verifyJWT, booking_controller_1.updateBookingStatus);
+router.get("/barber-shops", barbershop_controller_1.getBarberShops);
 router.get("/barber-shop/:barbershopId", verify_1.verifyJWT, barbershop_controller_1.getBarberShopById);
 router.post("/barber-shop", verify_1.verifyJWT, barbershop_controller_1.createBarberShop);
 router.post("/barber-shop/invite", verify_1.verifyJWT, barbershop_controller_1.createInvite);

@@ -20,6 +20,35 @@ export const listServices = async (req: Request, res: Response) => {
   };
 };
 
+export const listServiceBarbers = async (req: Request, res: Response) => {
+  try {
+    const { serviceId } = req.params as { serviceId: string };
+    const { barbershopId } = req.query as { barbershopId?: string };
+
+    if (!serviceId || !barbershopId) {
+      return res.status(400).json({ error: "serviceId e barbershopId são obrigatórios." });
+    }
+
+    const service = await prisma.service.findFirst({
+      where: { id: serviceId, barbershopId },
+      include: {
+        barbers: {
+          where: { barbershopId },
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    if (!service) {
+      return res.status(404).json({ error: "Serviço não encontrado para esta barbearia." });
+    }
+
+    return res.status(200).json(service.barbers);
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message });
+  }
+};
+
 export const createService = async (req: Request, res: Response) => {
   try {
     if (!(req as any)?.user) {

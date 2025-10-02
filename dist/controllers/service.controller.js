@@ -14,7 +14,13 @@ const prisma_1 = require("../lib/prisma");
 const listServices = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const services = yield prisma_1.prisma.service.findMany({
-            include: { barber: { select: { id: true, name: true } } },
+            include: {
+                barbershop: {
+                    include: {
+                        barbers: true
+                    }
+                }
+            },
         });
         return res.json(services);
     }
@@ -26,17 +32,53 @@ const listServices = (req, res) => __awaiter(void 0, void 0, void 0, function* (
 exports.listServices = listServices;
 const createService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const barberId = req.user.id;
-        const { name, price, duration } = req.body;
-        const service = yield prisma_1.prisma.service.create({
-            data: { name, price, duration, barberId },
+        if (!(req === null || req === void 0 ? void 0 : req.user)) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+        ;
+        const { name, price, duration, barberIds } = req.body;
+        if (!name || !price || !duration) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+        if (typeof price !== "number" || price <= 0) {
+            return res.status(400).json({ error: "Price must be a positive number" });
+        }
+        if (typeof duration !== "number" || duration <= 0) {
+            return res.status(400).json({ error: "Duration must be a positive number" });
+        }
+        if (barberIds && !Array.isArray(barberIds)) {
+            return res.status(400).json({ error: "barberIds must be an array of IDs" });
+        }
+        const barberShop = yield prisma_1.prisma.barbershop.findUnique({
+            where: { ownerId: req === null || req === void 0 ? void 0 : req.user.id },
+            select: { id: true }
         });
-        return res.status(201).json(service);
+        if (!barberShop) {
+            return res.status(404).json({ error: "Barbershop not found" });
+        }
+        const service = yield prisma_1.prisma.service.create({
+            data: {
+                name,
+                price,
+                duration,
+                barbershopId: barberShop.id,
+                barbers: barberIds
+                    ? { connect: barberIds.map((id) => ({ id })) }
+                    : undefined,
+            },
+            include: {
+                barbers: { select: { id: true, name: true, email: true } }
+            }
+        });
+        return res.status(201).json({
+            message: "Service created successfully",
+            data: service
+        });
     }
     catch (err) {
-        return res.status(400).json({ error: err.message });
+        console.error(err);
+        return res.status(500).json({ error: "Internal server error" });
     }
-    ;
 });
 exports.createService = createService;
 const updateService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {

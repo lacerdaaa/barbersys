@@ -15,7 +15,7 @@ const prisma_1 = require("../lib/prisma");
 const createBooking = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const clientId = req.user.id;
-        const { serviceId, date } = req.body;
+        const { serviceId, barberId, barbershopId, date } = req.body;
         const conflict = yield prisma_1.prisma.booking.findFirst({
             where: { serviceId, date: new Date(date), status: client_1.BookingStatus.CONFIRMED },
         });
@@ -26,6 +26,8 @@ const createBooking = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const booking = yield prisma_1.prisma.booking.create({
             data: {
                 clientId,
+                barbershopId,
+                barberId,
                 serviceId,
                 date: new Date(date),
             },
@@ -35,6 +37,7 @@ const createBooking = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     catch (err) {
         return res.status(400).json({ error: err.message });
     }
+    ;
 });
 exports.createBooking = createBooking;
 const listBookings = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -48,32 +51,25 @@ const listBookings = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 include: { service: true },
             });
         }
-        else {
+        ;
+        if (role === "BARBER") {
             bookings = yield prisma_1.prisma.booking.findMany({
-                where: { service: { barberId: userId } },
-                include: {
-                    service: true,
-                    client: {
-                        select: {
-                            name: true,
-                            bookings: {
-                                where: {
-                                    service: {
-                                        barberId: userId
-                                    }
-                                }
-                            },
-                        }
-                    }
-                },
+                where: {
+                    barberId: role,
+                }
             });
         }
         ;
-        return res.json(bookings);
+        if (role === "OWNER") {
+            bookings = yield prisma_1.prisma.booking.findMany();
+        }
+        ;
+        return res.status(200).json(bookings);
     }
     catch (err) {
         return res.status(400).json({ error: err.message });
     }
+    ;
 });
 exports.listBookings = listBookings;
 const updateBookingStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
